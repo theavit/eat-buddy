@@ -379,7 +379,7 @@ function HeroArt({ isMobile }) {
 }
 
 export function LandingScreen() {
-  const { setAuthMode } = useApp();
+  const { setAuthMode, startDemo } = useApp();
   const isMobile = useIsMobile();
   const isCompact = useIsCompact();
   const openAuth = (authMode) => {
@@ -545,8 +545,16 @@ export function LandingScreen() {
                 Get started
                 <Icon name="arrow_forward" size={20} tone="inverse" />
               </button>
-              <button type="button" onClick={() => openAuth("signin")} style={GHOST_BUTTON_STYLE}>
-                I already have an account
+              <button
+                type="button"
+                onClick={() => {
+                  startDemo();
+                  window.scrollTo(0, 0);
+                }}
+                style={GHOST_BUTTON_STYLE}
+              >
+                <Icon name="play_circle" size={20} tone="var(--color-primary-700)" />
+                Try the demo
               </button>
             </div>
             <div

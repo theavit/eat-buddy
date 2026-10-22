@@ -70,8 +70,63 @@ const emptyCreateForm = () => ({
   inviteMode: "",
 });
 
+// Demo mode runs entirely on sample data, so it works without the Supabase backend.
+const DEMO_USER = {
+  ...SAMPLE_USER,
+  id: "demo-user",
+  lastName: "Tan",
+};
+
+function demoGroup(id, name, code, members, adminName) {
+  const memberRows = members.map((member) => ({
+    id: member === DEMO_USER.name ? DEMO_USER.id : `demo-${member}`,
+    name: member,
+    avatar: "",
+    role: member === adminName ? "admin" : "member",
+  }));
+  const admin = memberRows.find((memberRow) => memberRow.role === "admin");
+  return {
+    id,
+    name,
+    code,
+    createdAt: "2026-10-01T09:00:00Z",
+    adminId: admin.id,
+    admin: admin.name,
+    members,
+    memberRows,
+    isAdmin: admin.id === DEMO_USER.id,
+  };
+}
+
+const DEMO_GROUPS = [
+  demoGroup(
+    "g1",
+    "Marketing Lunch Crew",
+    "MKT482",
+    [DEMO_USER.name, "Sarah Chen", "David Kim", "Emma Watson", "Lily Nguyen", "Marcus Reed"],
+    DEMO_USER.name,
+  ),
+  demoGroup(
+    "g2",
+    "Design Team",
+    "DSN731",
+    [DEMO_USER.name, "Sarah Chen", "Priya Patel", "Alex Torres", "Jordan Lee"],
+    "Priya Patel",
+  ),
+  demoGroup(
+    "g3",
+    "Cross-Team Foodies",
+    "XTF905",
+    [DEMO_USER.name, "Emma Watson", "Marcus Reed", "Jordan Lee"],
+    "Emma Watson",
+  ),
+];
+
+const DEMO_ONLY_MESSAGE = "This is the demo, so this needs a real account.";
+
 const INITIAL_STATE = {
   authed: false,
+  demo: false,
   user: SAMPLE_USER,
   authMode: AUTH_REDIRECT.recovery ? "reset" : AUTH_REDIRECT.present ? "signin" : "landing",
   authReady: false,
@@ -188,7 +243,7 @@ export function AppProvider({ children }) {
   const reloadGroups = useCallback(
     async (userId) => {
       const id = userId || stateRef.current.user?.id;
-      if (!id) {
+      if (!id || stateRef.current.demo) {
         return;
       }
       patch({
@@ -359,6 +414,18 @@ export function AppProvider({ children }) {
   );
   const saveProfile = useCallback(
     async (profile) => {
+      if (stateRef.current.demo) {
+        const user = { ...stateRef.current.user, ...profile };
+        user.name = `${user.firstName} ${user.lastName}`.trim();
+        user.initials = `${user.firstName[0] || ""}${user.lastName[0] || ""}`.toUpperCase();
+        patch({
+          user,
+        });
+        return {
+          ok: true,
+          user,
+        };
+      }
       const result = await updateProfileData(profile);
       if (result.ok) {
         patch({
@@ -395,12 +462,32 @@ export function AppProvider({ children }) {
     },
     [completeSignIn],
   );
+  const startDemo = useCallback(
+    () =>
+      patch({
+        authed: true,
+        demo: true,
+        user: DEMO_USER,
+        tab: "home",
+        modal: null,
+        authReady: true,
+        groups: DEMO_GROUPS,
+        groupsLoading: false,
+        groupsError: "",
+        selectedGroupId: null,
+      }),
+    [patch],
+  );
   const signOut = useCallback(async () => {
-    await logOut();
+    const wasDemo = stateRef.current.demo;
+    if (!wasDemo) {
+      await logOut();
+    }
     patch({
       authed: false,
+      demo: false,
       user: SAMPLE_USER,
-      authMode: "signin",
+      authMode: wasDemo ? "landing" : "signin",
       modal: null,
       profileMenuOpen: false,
       authNotice: "",
@@ -762,7 +849,18 @@ export function AppProvider({ children }) {
     if (!!name && !busyRef.current) {
       busyRef.current = true;
       try {
-        const result = await createGroup(name, stateRef.current.user.id);
+        const result = stateRef.current.demo
+          ? {
+              ok: true,
+              group: demoGroup(
+                `demo-${Date.now()}`,
+                name,
+                Math.random().toString(36).slice(2, 8).toUpperCase(),
+                [stateRef.current.user.name],
+                stateRef.current.user.name,
+              ),
+            }
+          : await createGroup(name, stateRef.current.user.id);
         if (!result.ok) {
           return patch({
             joinError: result.error,
@@ -790,7 +888,12 @@ export function AppProvider({ children }) {
         joinError: "",
       });
       try {
-        const result = await joinGroupWithCode(code, stateRef.current.user.id);
+        const result = stateRef.current.demo
+          ? {
+              ok: false,
+              error: `${DEMO_ONLY_MESSAGE} Try creating a group instead.`,
+            }
+          : await joinGroupWithCode(code, stateRef.current.user.id);
         if (!result.ok) {
           return patch({
             joinError: result.error,
@@ -812,7 +915,11 @@ export function AppProvider({ children }) {
   }, [patch, showToast]);
   const leaveGroup = useCallback(
     async (groupId) => {
-      const result = await leaveGroupMembership(groupId);
+      const result = stateRef.current.demo
+        ? {
+            ok: true,
+          }
+        : await leaveGroupMembership(groupId);
       if (!result.ok) {
         patch({
           modal: null,
@@ -829,13 +936,28 @@ export function AppProvider({ children }) {
   );
   const removeMember = useCallback(
     async (groupId, userId) => {
+      if (stateRef.current.demo) {
+        return patch((prev) => ({
+          groups: prev.groups.map((group) => {
+            if (group.id !== groupId) {
+              return group;
+            }
+            const memberRows = group.memberRows.filter((memberRow) => memberRow.id !== userId);
+            return {
+              ...group,
+              memberRows,
+              members: memberRows.map((memberRow) => memberRow.name),
+            };
+          }),
+        }));
+      }
       const result = await removeGroupMember(groupId, userId);
       if (!result.ok) {
         return showToast(result.error);
       }
       await reloadGroups();
     },
-    [reloadGroups, showToast],
+    [patch, reloadGroups, showToast],
   );
   const copyGroupCode = useCallback(
     (copiedCode) => {
@@ -1037,6 +1159,7 @@ export function AppProvider({ children }) {
       signIn,
       signUp,
       signOut,
+      startDemo,
       setAuthMode,
       signInWithProvider,
       requestPasswordReset,
@@ -1101,6 +1224,7 @@ export function AppProvider({ children }) {
       signIn,
       signUp,
       signOut,
+      startDemo,
       setAuthMode,
       signInWithProvider,
       requestPasswordReset,
