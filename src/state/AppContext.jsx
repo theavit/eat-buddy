@@ -292,9 +292,18 @@ export function AppProvider({ children }) {
         });
       }
     });
+    // If Supabase is slow or unreachable, stop waiting and show the page anyway.
+    const readyTimer = setTimeout(
+      () =>
+        active &&
+        patch({
+          authReady: true,
+        }),
+      4000,
+    );
     getCurrentUser()
       .then((user) => {
-        if (active) {
+        if (active && !stateRef.current.demo) {
           if (AUTH_REDIRECT.recovery) {
             patch({
               authed: false,
@@ -322,9 +331,13 @@ export function AppProvider({ children }) {
             authReady: true,
           }),
       )
-      .finally(() => clearAuthRedirect());
+      .finally(() => {
+        clearTimeout(readyTimer);
+        clearAuthRedirect();
+      });
     const unsubscribe = onAuthChange(({ event, user }) => {
-      if (active) {
+      // Real sign-in events must not interrupt someone using the demo.
+      if (active && !stateRef.current.demo) {
         if (event === "PASSWORD_RECOVERY") {
           patch({
             authed: false,
@@ -361,6 +374,7 @@ export function AppProvider({ children }) {
     });
     return () => {
       active = false;
+      clearTimeout(readyTimer);
       unsubscribe();
     };
   }, [patch, reloadGroups]);
