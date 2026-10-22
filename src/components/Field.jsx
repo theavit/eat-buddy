@@ -105,7 +105,7 @@ export function TextArea({ label, placeholder, rows = 4, ...rest }) {
       <textarea
         style={{
           ...FIELD_STYLE,
-          resize: "vertical",
+          resize: "none",
           fontFamily: "var(--font-family-base)",
         }}
         rows={rows}

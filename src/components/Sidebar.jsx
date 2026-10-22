@@ -24,16 +24,18 @@ function navItemStyle(active, sidebarCollapsed) {
   return {
     display: "flex",
     alignItems: "center",
-    gap: 12,
-    padding: sidebarCollapsed ? 10 : "10px 14px",
+    gap: 14,
+    minHeight: 48,
+    padding: sidebarCollapsed ? 12 : "12px 16px",
     justifyContent: sidebarCollapsed ? "center" : undefined,
-    borderRadius: 12,
+    borderRadius: 14,
     border: "none",
     cursor: "pointer",
     width: "100%",
     textAlign: "left",
     fontFamily: "var(--font-family-base)",
-    fontSize: 15,
+    fontSize: 16,
+    lineHeight: "24px",
     fontWeight: 500,
     transition: "background-color .15s ease, color .15s ease",
     ...(active
@@ -218,7 +220,7 @@ export function Sidebar() {
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 2,
+          gap: 4,
           padding: "8px 12px",
         }}
       >
@@ -231,7 +233,7 @@ export function Sidebar() {
               style={navItemStyle(active, sidebarCollapsed)}
               key={navItem.key}
             >
-              <Icon name={navItem.icon} size={20} tone={active ? "primary" : "secondary"} />
+              <Icon name={navItem.icon} size={24} tone={active ? "primary" : "secondary"} />
               {!sidebarCollapsed && navItem.label}
             </button>
           );
@@ -239,10 +241,7 @@ export function Sidebar() {
         <button
           onClick={openNotifications}
           title="Notifications"
-          style={{
-            ...navItemStyle(false, sidebarCollapsed),
-            fontSize: 14,
-          }}
+          style={navItemStyle(false, sidebarCollapsed)}
         >
           <span
             style={{
@@ -250,13 +249,13 @@ export function Sidebar() {
               display: "inline-flex",
             }}
           >
-            <Icon name="notifications" size={20} tone="secondary" />
+            <Icon name="notifications" size={24} tone="secondary" />
             {unreadCount > 0 && (
               <span
                 style={{
                   position: "absolute",
-                  top: -4,
-                  right: -6,
+                  top: -3,
+                  right: -5,
                   minWidth: 15,
                   height: 15,
                   padding: "0 3px",
