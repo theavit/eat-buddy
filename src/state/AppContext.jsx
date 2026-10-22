@@ -167,6 +167,7 @@ const INITIAL_STATE = {
     },
   ],
   newVoteInput: "",
+  voteGroupName: "",
   wyrIndex: 0,
   wyrChoice: null,
   soundOn: true,
@@ -1002,6 +1003,21 @@ export function AppProvider({ children }) {
       }),
     [patch],
   );
+  // Opens Games → Group Vote with fresh votes, labelled with the group that is voting.
+  const openGroupVote = useCallback(
+    (groupName) =>
+      patch((prev) => ({
+        tab: "games",
+        activeGame: "vote",
+        modal: null,
+        voteGroupName: groupName || "",
+        voteOptions: prev.voteOptions.map((voteOption) => ({
+          ...voteOption,
+          votes: 0,
+        })),
+      })),
+    [patch],
+  );
   const toggleSound = useCallback(
     () =>
       patch((prev) => ({
@@ -1218,6 +1234,7 @@ export function AppProvider({ children }) {
       copyGroupCode,
       reloadGroups,
       setActiveGame,
+      openGroupVote,
       toggleSound,
       addFood,
       removeFood,
@@ -1283,6 +1300,7 @@ export function AppProvider({ children }) {
       copyGroupCode,
       reloadGroups,
       setActiveGame,
+      openGroupVote,
       toggleSound,
       addFood,
       removeFood,

@@ -6,7 +6,7 @@ import voteBuddy from "../../assets/vote-buddy.png";
 
 export function GroupVote() {
   const { state, patch, addVoteOption, removeVoteOption, castVote, resetVotes } = useApp();
-  const { voteOptions, newVoteInput } = state;
+  const { voteOptions, newVoteInput, voteGroupName } = state;
   const totalVotes = voteOptions.reduce((sum, option) => sum + option.votes, 0);
   const topVotes = Math.max(0, ...voteOptions.map((voteOption) => voteOption.votes));
   return (
@@ -34,7 +34,7 @@ export function GroupVote() {
               color: "var(--text-heading)",
             }}
           >
-            Put it to a group vote
+            {voteGroupName ? `Where should ${voteGroupName} eat?` : "Put it to a group vote"}
           </h3>
           <p
             style={{

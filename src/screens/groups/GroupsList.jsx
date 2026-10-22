@@ -1,10 +1,30 @@
 import { Button } from "../../components/Button";
+import { Icon } from "../../components/Icon";
 import { toGroupViews, toLunchView } from "../../lib/viewModels";
 import { useApp } from "../../state/AppContext";
 import { PANEL_STYLE, STACK_MORE_STYLE } from "../../styles/shared";
 
+const HOW_IT_WORKS = [
+  {
+    icon: "group_add",
+    title: "Create or join a group",
+    text: "One group per team or lunch crew.",
+  },
+  {
+    icon: "event",
+    title: "Plan a meal",
+    text: "Pick a day and time, then invite the group.",
+  },
+  {
+    icon: "how_to_vote",
+    title: "Vote on where to eat",
+    text: "Everyone votes; the top place wins.",
+  },
+];
+
 export function GroupsList() {
-  const { state, openCreateGroup, openJoinGroup, openGroupDetail, openCreateLunch } = useApp();
+  const { state, openCreateGroup, openJoinGroup, openGroupDetail, openCreateLunch, openGroupVote } =
+    useApp();
   const lunchViews = state.lunches.map((lunch, index) => toLunchView(lunch, index, state.groups));
   const groupViews = toGroupViews(state.groups, lunchViews);
   return (
@@ -37,7 +57,7 @@ export function GroupsList() {
               color: "var(--text-muted)",
             }}
           >
-            Create a group, or join one with a code.
+            Your teams for planning meals and voting on where to eat.
           </p>
         </div>
         <div
@@ -54,6 +74,67 @@ export function GroupsList() {
           </Button>
         </div>
       </div>
+      <ol
+        aria-label="How groups work"
+        style={{
+          listStyle: "none",
+          margin: "0 0 20px",
+          padding: 0,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 12,
+        }}
+      >
+        {HOW_IT_WORKS.map((step, index) => (
+          <li
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "12px 14px",
+              borderRadius: 14,
+              background: "var(--color-primary-50)",
+            }}
+            key={step.title}
+          >
+            <span
+              style={{
+                width: 36,
+                height: 36,
+                flexShrink: 0,
+                borderRadius: "50%",
+                background: "var(--color-primary-500)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Icon name={step.icon} size={20} tone="inverse" />
+            </span>
+            <span>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "var(--text-heading)",
+                }}
+              >
+                {index + 1}. {step.title}
+              </span>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: 12,
+                  color: "var(--color-primary-700)",
+                }}
+              >
+                {step.text}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ol>
       {state.groupsError && (
         <div
           role="alert"
@@ -171,6 +252,21 @@ export function GroupsList() {
                 }}
               >
                 + Plan a meal
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                iconLeft={<Icon name="how_to_vote" size={18} tone="inverse" />}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  openGroupVote(group.name);
+                }}
+                style={{
+                  flex: 1,
+                  width: "100%",
+                }}
+              >
+                Vote
               </Button>
             </div>
           </div>

@@ -33,9 +33,16 @@ function AvatarStack({ lunch, showOverflow }) {
 }
 
 function LunchAction({ lunch }) {
-  const { openLunch, toggleJoin } = useApp();
-  const handleClick = () =>
-    lunch.past || (lunch.voting && !lunch.joined) ? openLunch(lunch.id) : toggleJoin(lunch.id);
+  const { openLunch, toggleJoin, openGroupVote } = useApp();
+  const handleClick = () => {
+    if (lunch.voting && !lunch.joined && !lunch.past) {
+      openGroupVote(lunch.groupLabel === "No group" ? lunch.name : lunch.groupLabel);
+    } else if (lunch.past) {
+      openLunch(lunch.id);
+    } else {
+      toggleJoin(lunch.id);
+    }
+  };
   return (
     <div onClick={(event) => event.stopPropagation()}>
       <Button variant={lunch.ctaVariant} size="sm" onClick={handleClick}>
