@@ -114,6 +114,10 @@ const FAQS = [
 
 const PREVIEW_PEOPLE = ["Sokha Chan", "Dara Pich", "Meylin Sok", "Vuthy Kim"];
 
+// While true, "Sign in" and "Get started" open the demo instead of the real sign-in.
+// Set back to false to bring real accounts back.
+const DEMO_ONLY = true;
+
 const SECTION_STYLE = {
   maxWidth: 1180,
   margin: "0 auto",
@@ -383,6 +387,11 @@ export function LandingScreen() {
   const isMobile = useIsMobile();
   const isCompact = useIsCompact();
   const openAuth = (authMode) => {
+    if (DEMO_ONLY) {
+      startDemo();
+      window.scrollTo(0, 0);
+      return;
+    }
     window.history.pushState(
       {
         ebAuth: authMode,
